@@ -15,11 +15,17 @@ public class WebSocketBoardHandler extends TextWebSocketHandler {
 
     private static Logger logger = Logger.getLogger(WebSocketBoardHandler.class);
 
+    private RoomService roomService;
+
+    public WebSocketBoardHandler(RoomService roomService) {
+        this.roomService = roomService;
+    }
+
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws IOException, InterruptedException {
         Optional<Integer> roomNumber = getRoomNumberFromSession(session);
         if (roomNumber.isPresent()) {
-            System.out.println("Connected with " + session.getRemoteAddress() + ", roomNumber: " + roomNumber);
+            roomService.registerSession(session, roomNumber.get());
         }
         else {
             session.close(CloseStatus.POLICY_VIOLATION);
@@ -33,12 +39,13 @@ public class WebSocketBoardHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        logger.debug("Connection with session " + session.getId() + " has been closed with status " + status);
+        roomService.deregisterSession(session);
     }
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
         session.close(CloseStatus.SERVER_ERROR);
+        roomService.deregisterSession(session);
     }
 
     private Optional<Integer> getRoomNumberFromSession(WebSocketSession session) {
