@@ -41,6 +41,21 @@ public class RoomService {
         availableRoomNumbers.add(roomNumber);
     }
 
+    public Set<WebSocketSession> getSessionsForRoom(int roomNumber) {
+        if (!isCreated(roomNumber)) {
+            throw new RuntimeException("Room number " + roomNumber + " hasn't been created");
+        }
+        return roomNumberToSessions.get(roomNumber);
+    }
+
+    public int getRoomForSession(WebSocketSession session) {
+        Integer roomNumber = sessionToRoomNumber.get(session);
+        if (roomNumber == null) {
+            throw new RuntimeException("No corresponding roomNumber for session " + session);
+        }
+        return roomNumber;
+    }
+
     public void registerSession(WebSocketSession session, int roomNumber) {
         if (!isCreated(roomNumber)) {
             throw new RuntimeException("Room number " + roomNumber + " hasn't been created");
