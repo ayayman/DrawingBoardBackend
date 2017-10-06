@@ -1,5 +1,6 @@
 package com.example.drawingboard;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,13 @@ public class WebSocketInterceptor implements HandshakeInterceptor {
 
     private static final Pattern roomPattern = Pattern.compile(".*room=([0-9]+)$");
 
+    private RoomService roomService;
+
+    @Autowired
+    public WebSocketInterceptor(RoomService roomService) {
+        this.roomService = roomService;
+    }
+
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler,
                                    Map<String, Object> attributes) throws Exception {
@@ -23,9 +31,18 @@ public class WebSocketInterceptor implements HandshakeInterceptor {
         if (queryString != null) {
             Optional<String> roomOptional = extractRoomFromUri(queryString);
             if (roomOptional.isPresent()) {
-                String webSocketToken = roomOptional.get();
-                attributes.put("room", roomOptional.get());
-                return true;
+                String room = roomOptional.get();
+                try {
+                    Integer roomNumber = Integer.parseInt(room);
+                    if (!roomService.isCreated(roomNumber)) {
+                        throw new RuntimeException();
+                    }
+                    attributes.put("room", roomOptional.get());
+                    return true;
+
+                } catch (Exception ex) {
+                    return false;
+                }
             }
         }
         return false;
