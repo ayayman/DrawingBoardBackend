@@ -11,6 +11,7 @@ public class BoardLineMessage {
     private Double y1;
     private String color;
     private Integer size;
+    private Integer peopleCount;
 
     public Type getType() {
         return type;
@@ -66,5 +67,13 @@ public class BoardLineMessage {
 
     public void setSize(Integer size) {
         this.size = size;
+    }
+
+    public Integer getPeopleCount() {
+        return peopleCount;
+    }
+
+    public void setPeopleCount(Integer peopleCount) {
+        this.peopleCount = peopleCount;
     }
 }

@@ -18,6 +18,7 @@ import java.util.Set;
 
 import static com.example.drawingboard.BoardLineMessage.Type.ADD;
 import static com.example.drawingboard.BoardLineMessage.Type.CLEAR;
+import static com.example.drawingboard.BoardLineMessage.Type.INFO;
 
 @Component
 public class WebSocketBoardHandler extends TextWebSocketHandler {
@@ -48,6 +49,8 @@ public class WebSocketBoardHandler extends TextWebSocketHandler {
                 String serialized = objectMapper.writeValueAsString(message);
                 session.sendMessage(new TextMessage(serialized));
             }
+
+            broadcastInfoToRoomMembers(roomNumber);
         }
         else {
             session.close(CloseStatus.POLICY_VIOLATION);
@@ -77,7 +80,9 @@ public class WebSocketBoardHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        int roomNumber = roomService.getRoomForSession(session);
         roomService.deregisterSession(session);
+        broadcastInfoToRoomMembers(roomNumber);
     }
 
     @Override
@@ -100,5 +105,19 @@ public class WebSocketBoardHandler extends TextWebSocketHandler {
 
     private ObjectMapper getObjectMapper() {
         return springMvcJacksonConverter.getObjectMapper();
+    }
+
+    private void broadcastInfoToRoomMembers(int roomNumber) throws IOException {
+        ObjectMapper objectMapper = getObjectMapper();
+        Set<WebSocketSession> allSessionsInRoom = roomService.getSessionsForRoom(roomNumber);
+
+        BoardLineMessage infoMessage = new BoardLineMessage();
+        infoMessage.setType(INFO);
+        infoMessage.setPeopleCount(allSessionsInRoom.size());
+
+        for (WebSocketSession sessionInRoom : allSessionsInRoom) {
+            String serialized = objectMapper.writeValueAsString(infoMessage);
+            sessionInRoom.sendMessage(new TextMessage(serialized));
+        }
     }
 }
