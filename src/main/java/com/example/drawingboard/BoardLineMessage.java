@@ -2,7 +2,7 @@ package com.example.drawingboard;
 
 public class BoardLineMessage {
 
-    public enum Type { ADD, CLEAR, INFO }
+    public enum Type { ADD, CLEAR, INFO, REDRAW}
 
     private Type type;
     private Double x0;

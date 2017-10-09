@@ -1,6 +1,5 @@
 package com.example.drawingboard;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static com.example.drawingboard.BoardLineMessage.Type.ADD;
-import static com.example.drawingboard.BoardLineMessage.Type.CLEAR;
-import static com.example.drawingboard.BoardLineMessage.Type.INFO;
+import static com.example.drawingboard.BoardLineMessage.Type.*;
 
 @Component
 public class WebSocketBoardHandler extends TextWebSocketHandler {
@@ -69,6 +66,13 @@ public class WebSocketBoardHandler extends TextWebSocketHandler {
         }
         else if (boardMessage.getType() == CLEAR) {
             boardService.clearAllLines(roomNumber);
+        }
+        else if (boardMessage.getType() == REDRAW) {
+            List<BoardLineMessage> boardMessages = boardService.getAllLines(roomNumber);
+            for (BoardLineMessage aMessage : boardMessages) {
+                String serialized = objectMapper.writeValueAsString(aMessage);
+                session.sendMessage(new TextMessage(serialized));
+            }
         }
         Set<WebSocketSession> sessionsInRoom = roomService.getSessionsForRoom(roomNumber);
         for (WebSocketSession sessionInRoom : sessionsInRoom) {
